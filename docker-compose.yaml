@@ -1,0 +1,70 @@
+version: '3.7'
+services:
+  postgres:
+    image: nikvladimirovich2/spilo-dd:2
+    container_name: postgres
+    network_mode: "host"
+    privileged: true
+    restart: always
+    shm_size: "512Mb"
+    environment:
+      - SPILO_PROVIDER=local
+      - USE_WALG_BACKUP=false
+      - USE_WALG_RESTORE=false
+      #- WALG_SSH_PREFIX=ssh://green.vdags.digdes.com/backup
+      #- USE_WALG_BACKUP=true
+      #- USE_WALG_RESTORE=false
+      #- WALG_SSH_PREFIX=ssh://green.vdags.digdes.com/backup
+      #- SSH_USERNAME=sbrf01
+      #- SSH_PASSWORD=P@ssw0rd01
+      #- SSH_PORT=22
+      #- SSH_PRIVATE_KEY_PATH=/id_rsa
+      - SCOPE=pgCluster
+      - PGROOT=/pgroot
+      - PGDATA=/pgroot/pgdata
+      - INITDB_LOCALE=ru_RU
+      - ALLOW_NOSSL=true
+      - PGPASSWORD_SUPERUSER=postgres
+      - PATRONI_POSTGRESQL_LISTEN=0.0.0.0:5432
+    volumes:
+      - /data:/pgroot
+      - /data/pgdata:/pgroot/pgdata
+      - /etc/localtime:/etc/localtime:ro
+      - /dev/hugepages:/dev/hugepages
+
+  pgagent:
+    image: nikvladimirovich2/pgagent:1.0
+    container_name: pgagent
+    network_mode: "host"
+    privileged: true
+    restart: always
+    depends_on:
+      - postgres
+
+  pgconfig:
+    image: nikvladimirovich2/pgconfig:1.0
+    container_name: pgconfig
+    network_mode: "host"
+    privileged: true
+    volumes:
+      - /data/pgdata:/pgroot/pgdata:ro
+      - /etc/sysctl.d:/hugepages
+      - /var/log/digdes/pgconfig/:/logs/
+      - /etc/localtime:/etc/localtime:ro
+    depends_on:
+      - postgres
+
+  pgadmin:
+    image: elestio/pgadmin:REL-8_9
+    container_name: pgadmin
+    network_mode: "host"
+    privileged: true
+    restart: always
+    environment:
+     - PGADMIN_DEFAULT_EMAIL=user@digdes.com
+     - PGADMIN_DEFAULT_PASSWORD=password
+     - PGADMIN_LISTEN_ADDRESS=0.0.0.0
+     - SERVER_PORT=5050
+    volumes:
+     - ../pgadmin:/data
+     - /etc/localtime:/etc/localtime:ro
