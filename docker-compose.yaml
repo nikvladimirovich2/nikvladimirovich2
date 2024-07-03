@@ -57,7 +57,7 @@ services:
   pgadmin:
     image: elestio/pgadmin:REL-8_9
     container_name: pgadmin
-    network_mode: "host"
+    #network_mode: "host"
     privileged: true
     restart: always
     ports:
